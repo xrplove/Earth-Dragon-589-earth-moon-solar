@@ -1,0 +1,46 @@
+{
+  "name": "earth-moon-solar",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "vite --host 127.0.0.1",
+    "build": "vite build",
+    "preview": "vite preview --host 127.0.0.1",
+    "test": "node tests/text-transition-check.mjs",
+    "test:solar": "node tests/solar-check.mjs",
+    "test:stars": "node tests/starfield-check.mjs",
+    "test:moon": "node tests/moon-playback-check.mjs",
+    "test:journeys": "node tests/solar-journey-check.mjs",
+    "test:release": "node tests/release-check.mjs"
+  },
+  "dependencies": {
+    "three": "^0.180.0"
+  },
+  "devDependencies": {
+    "@playwright/test": "^1.55.0",
+    "vite": "^7.1.0"
+  },
+  "description": "Explore Earth, the Moon, and all eight planets in an interactive Three.js solar system with NASA imagery and JPL orbital data.",
+  "license": "MIT",
+  "author": "Ethan Rogers",
+  "engines": {
+    "node": ">=22.12.0"
+  },
+  "homepage": "https://earth.ethanplus.ai",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/ethanplusai/earth-moon-solar.git"
+  },
+  "bugs": {
+    "url": "https://github.com/ethanplusai/earth-moon-solar/issues"
+  },
+  "keywords": [
+    "threejs",
+    "earth",
+    "moon",
+    "solar-system",
+    "astronomy",
+    "webgl"
+  ]
+}

@@ -1,0 +1,18 @@
+import {chromium} from '@playwright/test';
+import assert from 'node:assert/strict';
+const browser=await chromium.launch({headless:true,...(process.env.CHROMIUM_PATH?{executablePath:process.env.CHROMIUM_PATH}:{}),args:['--enable-webgl','--ignore-gpu-blocklist']});
+const base=process.env.TEST_URL||'http://127.0.0.1:5173';
+try{for(const viewport of [{width:1440,height:900},{width:440,height:956}]){
+ const page=await browser.newPage({viewport}),errors=[];page.on('pageerror',e=>errors.push(e.message));page.on('console',m=>{if(m.type()==='error'&&/WebGL|shader|THREE/.test(m.text()))errors.push(m.text());});
+ await page.addInitScript(()=>{window.transitionFrames=[];const sample=t=>{const canvas=document.querySelector('canvas'),header=document.querySelector('.world-shell>.site-header'),bridge=document.querySelector('#journey-header');if(canvas)window.transitionFrames.push({t,header:header?+getComputedStyle(header).opacity:null,bridge:!!bridge,frame:!!document.querySelector('#journey-frame'),moving:canvas.dataset.cameraMoving,atlas:Number(canvas.dataset.atlas),moon:Number(canvas.dataset.journeyProgress)});requestAnimationFrame(sample);};requestAnimationFrame(sample);});
+ const nav=async id=>{if(viewport.width<=900){await page.locator('#menu-toggle').click();await page.locator(`#mobile-navigation [data-experience=${id}]`).click();}else await page.locator(`.desktop-navigation [data-experience=${id}]`).click();};
+ const solarSettled=()=>page.waitForFunction(()=>document.querySelector('canvas')?.dataset.cameraMoving==='false'&&document.querySelector('canvas')?.dataset.view==='system');
+ const moonSettled=()=>page.waitForFunction(()=>document.querySelector('canvas')?.dataset.journeyProgress==='1.0000');
+ await page.goto(base+'/');await page.waitForSelector('.ready');await nav('solar');await page.waitForURL('**/solar.html');await solarSettled();assert.ok(await page.evaluate(()=>window.__earthJourney?.pose));assert.equal(await page.locator('#journey-frame').count(),0);assert.equal(await page.locator('#journey-header').count(),0);
+ const frames=await page.evaluate(()=>transitionFrames.filter(f=>f.moving==='true'&&Number.isFinite(f.atlas)));assert.ok(frames.length>10);assert.ok(await page.evaluate(()=>transitionFrames.filter(f=>f.frame).every(f=>f.bridge)),'the header bridge stays above the loading frame');for(let i=1;i<frames.length;i++){assert.ok(frames[i].atlas>=frames[i-1].atlas-.0001,'entry scale progresses continuously');assert.equal(frames[i].header,1,'navigation remains visible throughout the zoom');}
+ assert.ok(await page.evaluate(()=>transitionFrames.some(f=>f.atlas>.2&&f.atlas<.8)));
+ await page.screenshot({path:`/tmp/solar-journey-end-${viewport.width}.png`});
+ await nav('moon');await page.waitForURL('**/moon.html');await moonSettled();assert.equal(await page.locator('#journey-frame').count(),0);assert.equal(await page.locator('#journey-header').count(),0);
+ await nav('solar');await page.waitForURL('**/solar.html');assert.ok(await page.evaluate(()=>window.__earthJourney?.pose?.moon),'Moon transfers directly to the solar overview');await solarSettled();await nav('planet');await page.waitForURL(base+'/');await page.waitForSelector('.ready');await page.waitForFunction(()=>!document.documentElement.classList.contains('journey-running'));assert.equal(await page.locator('#journey-frame').count(),0);
+ await page.emulateMedia({reducedMotion:'reduce'});await page.goto(base+'/solar.html');await solarSettled();assert.equal(await page.locator('#solar-play').getAttribute('aria-pressed'),'false');assert.deepEqual(errors,[]);console.log(viewport.width,'Earth → Solar → Moon → Solar → Earth, stable navigation and reduced motion passed');await page.close();
+}}finally{await browser.close();}
