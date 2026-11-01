@@ -19,7 +19,7 @@
   },
   "devDependencies": {
     "@playwright/test": "^1.55.0",
-    "vite": "^7.1.0"
+    "vite": "^7.3.7"
   },
   "description": "Explore Earth, the Moon, and all eight planets in an interactive Three.js solar system with NASA imagery and JPL orbital data.",
   "license": "MIT",
